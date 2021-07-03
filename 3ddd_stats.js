@@ -142,8 +142,8 @@ function init_3ddd_stats() {
         wrap.insertBefore(stats_price, wrap.firstChild);
         wrap.insertBefore(stats_income, stats_price);
         
-        chart_income = new ApexCharts(stats_income, opt_income_per_prod);
-        chart_price = new ApexCharts(stats_price, opt_price_per_prod);
+        const chart_income = new ApexCharts(stats_income, opt_income_per_prod);
+        const chart_price = new ApexCharts(stats_price, opt_price_per_prod);
         
         chart_income.render();
         chart_price.render();
