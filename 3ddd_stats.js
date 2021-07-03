@@ -1,9 +1,9 @@
 function init_3ddd_stats() {
     //can't parse if location is not profile page
-    if (window.location.pathname.match('user') == null) {
-        alert('3ddd_stats\nThe script must be executed from user profile page');
-        return;
-    }
+    //if (window.location.pathname.match('user') == null) {
+    //    alert('3ddd_stats\nThe script must be executed from user profile page');
+    //    return;
+    //}
     
     const async_parse = true;
     const reg1 = /withdraw_stat\/(\w+)/g;
@@ -47,8 +47,7 @@ function init_3ddd_stats() {
             const matches = payout.matchAll(reg3);
             const [date, anchor, state, amount, invoice] = Array.from(matches, v => v[1]);
             const query = anchor.match(reg1)[0];
-            withdraws.push([parse_date(date)
-                .getTime(), query, parse_float(amount)]);
+            withdraws.push( [parse_date(date).getTime(), query, parse_float(amount)] );
         }
         
         //sort withdraws by date (unnecessary because the collect is async anyway)
@@ -56,11 +55,11 @@ function init_3ddd_stats() {
         
         //parse old withdraws
         for (const [date, query, amount] of withdraws) {
-            make_request(query, parse_income_page);
+            make_request('https://3ddd.ru/user/' + query, parse_income_page);
         }
         
         //parse new income too
-        make_request('/user/income_new', parse_income_page);
+        make_request('https://3ddd.ru/user/income_new', parse_income_page);
     }
     
     //TBD: error handling
@@ -189,7 +188,7 @@ function init_3ddd_stats() {
         }
         
         //now we are ready to parse and consume data
-        make_request('/user/withdraw_history', parse_profile_page);
+        make_request('https://3ddd.ru/user/withdraw_history', parse_profile_page);
         
         //guard
         window['3ddd_stats_executed'] = true;
