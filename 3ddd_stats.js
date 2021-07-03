@@ -18,7 +18,7 @@ function init_3ddd_stats() {
     {   //inject apexcharts script
         const charts = document.createElement('script');
         wrap.appendChild(charts);
-        charts.setAttribute('src', 'https://cdn.jsdelivr.net/npm/apexcharts2');
+        charts.setAttribute('src', 'https://cdn.jsdelivr.net/npm/apexcharts');
         charts.onload = init_charts;
     }
       
