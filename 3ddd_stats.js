@@ -72,8 +72,7 @@ function init_3ddd_stats() {
             
             //TBD: make a smart insert in pre sorted array
             if (!products[anchor]) products[anchor] = [];
-            products[anchor].push([parse_date(date)
-                .getTime(), parse_float(amount)]);
+            products[anchor].push([ parse_date(date).getTime(), parse_float(amount) ]);
         }
         
         //force chart updates
@@ -176,8 +175,8 @@ function init_3ddd_stats() {
             //fill charts with updated data, TBD: needs optimizations
             for (const [anchor, data] of Object.entries(products)) {
                 let sum = 0;
-                const name = (/>(.*?)</g)
-                    .exec(anchor)[1]; //TBD: prbly shouldn't be here
+                const name = (/>(.*?)</g).exec(anchor)[1]; //TBD: prbly shouldn't be here
+                
                 chart_income.appendSeries({
                     name: name,
                     data: data.map(v => [v[0], sum += v[1]])
@@ -191,9 +190,9 @@ function init_3ddd_stats() {
         
         //now we are ready to parse and consume data
         make_request('/user/withdraw_history', parse_profile_page);
+        
+        //guard
+        window['3ddd_stats_executed'] = true;
     }
-
-    //guard
-    window['3ddd_stats_executed'] = true;
 };
 if (!window['3ddd_stats_executed']) init_3ddd_stats();
