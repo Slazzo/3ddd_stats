@@ -1,18 +1,16 @@
 function init_3ddd_stats() {
-    //can't parse if location is not profile page
-    //if (window.location.pathname.match('user') == null) {
-    //    alert('3ddd_stats\nThe script must be executed from user profile page');
-    //    return;
-    //}
     
-    const async_parse = true;
     const reg1 = /withdraw_stat\/(\w+)/g;
     const reg2 = /(<td>(.|\n)*?\/tr>)/g;
     const reg3 = /<td>(.*?)<\/td>/g;
     
+    // data
     let products = {};
     let withdraws = [];
     
+    let progress_target = 1;
+    let progress_amount = 0;
+
     
     const wrap = document.getElementById('wrap');
     {   //inject apexcharts script
@@ -35,7 +33,7 @@ function init_3ddd_stats() {
     function make_request(path, callable) {
         const xhr = new XMLHttpRequest();
         xhr.onload = callable;
-        xhr.open('get', path, async_parse);
+        xhr.open('get', path);
         xhr.send();
     }
     
@@ -53,6 +51,10 @@ function init_3ddd_stats() {
         //sort withdraws by date (unnecessary because the collect is async anyway)
         withdraws.sort((l, r) => l[0] - r[0]);
         
+        //for progress estimate
+        progress_target = withdraws.length + 1;
+        progress_amount = 0;
+
         //parse old withdraws
         for (const [date, query, amount] of withdraws) {
             make_request('https://3ddd.ru/user/' + query, parse_income_page);
@@ -74,18 +76,19 @@ function init_3ddd_stats() {
             products[anchor].push([ parse_date(date).getTime(), parse_float(amount) ]);
         }
         
-        //force chart updates
-        update_charts_clbk();
+        //report progress
+        progress_clbk(++progress_amount, progress_target);
     };
     
-    function update_charts_clbk() { /* does nothing until charts are instantiated */}
+    function progress_clbk(i, total) { /* does nothing until charts are instantiated */ }
 
     function init_charts() {
         //common chart settings
         const opt_price_per_prod = {
             series: [],
+            stroke: { width: 1}, 
             chart: {
-                type: 'area',
+                type: 'line',
                 stacked: false,
                 height: 400,
                 zoom: {
@@ -135,23 +138,34 @@ function init_3ddd_stats() {
         
         const stats_price = document.createElement('article');
         const stats_income = document.createElement('article');
-        stats_price.style.width = wrap.width;
-        stats_income.style.width = wrap.width;
+        const stats_progress = document.createElement('article');
+        
+        stats_price.style.width = stats_income.style.width = 
+            stats_progress.style.width = wrap.width;
+        
         wrap.insertBefore(stats_price, wrap.firstChild);
         wrap.insertBefore(stats_income, stats_price);
-        
+        wrap.insertBefore(stats_progress, stats_income);
+
+        var opt_progress = {
+          chart: {
+              height: 300,
+              type: 'radialBar',
+          },
+          series: [0],
+          labels: ['Progress'],
+        };
+
+        const chart_progress = new ApexCharts(stats_progress, opt_progress);
         const chart_income = new ApexCharts(stats_income, opt_income_per_prod);
         const chart_price = new ApexCharts(stats_price, opt_price_per_prod);
         
+        chart_progress.render();
         chart_income.render();
         chart_price.render();
         
-        update_charts_clbk = () => {
-            //sort the products by date
-            for ([key, data] of Object.entries(products)) {
-                data.sort((l, r) => l[0] - r[0]);
-            }
-            
+
+        function update_charts() {
             //clear charts, because we re append data
             const resetChart = {
                 series: [],
@@ -159,23 +173,15 @@ function init_3ddd_stats() {
             };
             chart_income.updateOptions(resetChart);
             chart_price.updateOptions(resetChart);
-            
-            //add withdraw annotations
-            for (const [date, query, amount] of withdraws) {
-                chart_income.addXaxisAnnotation({
-                    x: date,
-                    strokeDashArray: 1,
-                    label: {
-                        text: 'withdraw ' + amount
-                    }
-                });
-            }
-            
-            //fill charts with updated data, TBD: needs optimizations
-            for (const [anchor, data] of Object.entries(products)) {
-                let sum = 0;
+
+            //fill charts with updated data
+            for ([anchor, data] of Object.entries(products)) {
                 const name = (/>(.*?)</g).exec(anchor)[1]; //TBD: prbly shouldn't be here
-                
+
+                //data must be sorted by date (Y axis)
+                data.sort((l, r) => l[0] - r[0]);
+
+                let sum = 0;
                 chart_income.appendSeries({
                     name: name,
                     data: data.map(v => [v[0], sum += v[1]])
@@ -185,7 +191,34 @@ function init_3ddd_stats() {
                     data: data
                 });
             }
+    
+
+             //add withdraw annotations
+            for (const [date, query, amount] of withdraws) {
+                chart_income.addXaxisAnnotation({
+                    x: date,
+                    strokeDashArray: 1,
+                    label: {
+                        text: 'withdraw ' + amount
+                    }
+                });
+            }
+        };
+
+        //override data progress callback 
+        progress_clbk = (i, total) => {
+            const progress = Math.floor(100*(i/total));
+            chart_progress.updateSeries([progress]);
+            
+            //don't update charts if still in progress
+            if (progress != 100) return;
+
+            update_charts();
+
+            //don't need it anymore
+            chart_progress.destroy();
         }
+
         
         //now we are ready to parse and consume data
         make_request('https://3ddd.ru/user/withdraw_history', parse_profile_page);
