@@ -166,14 +166,10 @@ function init_3ddd_stats() {
         
 
         function update_charts() {
-            //clear charts, because we re append data
-            const resetChart = {
-                series: [],
-                annotations: {}
-            };
-            chart_income.updateOptions(resetChart);
-            chart_price.updateOptions(resetChart);
-
+            
+            let rawData = [], 
+                incomeData = [];
+            
             //fill charts with updated data
             for ([anchor, data] of Object.entries(products)) {
                 const name = (/>(.*?)</g).exec(anchor)[1]; //TBD: prbly shouldn't be here
@@ -181,19 +177,12 @@ function init_3ddd_stats() {
                 //data must be sorted by date (Y axis)
                 data.sort((l, r) => l[0] - r[0]);
 
+                rawData.push ({ name: name, data: data });
                 let sum = 0;
-                chart_income.appendSeries({
-                    name: name,
-                    data: data.map(v => [v[0], sum += v[1]])
-                });
-                chart_price.appendSeries({
-                    name: name,
-                    data: data
-                });
+                incomeData.push({ name: name, data: data.map(v => [v[0], sum += v[1]]) });
             }
-    
-
-             //add withdraw annotations
+ 
+            //add withdraw annotations
             for (const [date, query, amount] of withdraws) {
                 chart_income.addXaxisAnnotation({
                     x: date,
@@ -203,6 +192,9 @@ function init_3ddd_stats() {
                     }
                 });
             }
+            //fill charts
+            chart_price.updateSeries(rawData);
+            chart_income.updateSeries(incomeData);
         };
 
         //override data progress callback 
