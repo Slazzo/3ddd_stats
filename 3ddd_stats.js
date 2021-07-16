@@ -57,15 +57,31 @@ function init_3ddd_stats() {
 
         //parse old withdraws
         for (const [date, query, amount] of withdraws) {
-            make_request('https://3ddd.ru/user/' + query, parse_income_page);
+            make_request('https://3ddd.ru/user/' + query + '?page=1', parse_income_page);
         }
         
         //parse new income too
-        make_request('https://3ddd.ru/user/income_new', parse_income_page);
+        make_request('https://3ddd.ru/user/income_new?page=1', parse_income_page);
     }
     
     //TBD: error handling
     function parse_income_page(e) {
+        //workaround for multiple pages
+        {
+            const [_, url, page] = (/(.+?(?=page))page=([0-9]+)/g).exec(e.target.responseURL);
+            const pagei = parseInt(page);
+            const query = url.split('/').pop().replace('?','\\?');
+            const regex = new RegExp( query + "page=([0-9]+)", 'g');
+            const links = e.target.response.matchAll(regex);
+            const pages = Array.from(links, v => parseInt(v[1]));
+            const pagel = Math.max.apply(Math, pages);
+            //spawn another reguest for the next page
+            if(pagei < pagel) {
+                ++progress_target;
+                make_request(url + 'page=' + (pagei+1), parse_income_page);
+            }  
+        }
+
         const sells = e.target.response.matchAll(reg2);
         for (const [_, sell] of sells) {
             const matches = sell.matchAll(reg3);
