@@ -1,9 +1,5 @@
 function init_3ddd_stats() {
     
-    const reg1 = /withdraw_stat\/(\w+)/g;
-    const reg2 = /(<td>(.|\n)*?\/tr>)/g;
-    const reg3 = /<td>(.*?)<\/td>/g;
-    
     // data
     let products = {};
     let withdraws = [];
@@ -37,14 +33,41 @@ function init_3ddd_stats() {
         xhr.send();
     }
     
+    function* parse_html(str) {
+        const fields = str.matchAll(/(<td>(.|\n)*?\/tr>)/g);
+        for (const [_, field] of fields) {
+            const entry = field.matchAll(/<td>(.*?)<\/td>/g);
+            const data = Array.from(entry, v => v[1]);
+            yield data;
+        }
+    }
+
+    function handle_next_page(e, callable) {
+    	console.log(e.target.responseURL);
+        const [_, url, page] = (/(.+?(?=\?page))\?page=([0-9]+)/g)
+        	.exec(e.target.responseURL) || [null, e.target.responseURL, '1'];
+        const pagei = parseInt(page);
+        const query = url.split('/').pop().replace('?','');
+        const regex = new RegExp( query + "\\?page=([0-9]+)", 'g');
+        const links = e.target.response.matchAll(regex);
+        const pages = Array.from(links, v => parseInt(v[1]));
+        const pagel = pages.length > 0 ? Math.max.apply(Math, pages) : pagei;
+        //spawn another reguest for the next page
+        if(pagei < pagel) {
+            ++progress_target;
+            make_request(url + '?page=' + (pagei+1), callable);
+        }  
+    }
+
     //TBD: error handling
     function parse_profile_page(e) {
+    	//workaround for multiple pages
+        handle_next_page(e, parse_profile_page);
+
         //collect withdraws  
-        const old_incomes = e.target.response.matchAll(reg2);
-        for (const [_, payout] of old_incomes) {
-            const matches = payout.matchAll(reg3);
-            const [date, anchor, state, amount, invoice] = Array.from(matches, v => v[1]);
-            const query = anchor.match(reg1)[0];
+        for (const [date, anchor, state, amount, invoice] of parse_html(e.target.response)) {
+            
+            const query = anchor.match(/withdraw_stat\/(\w+)/g)[0];
             withdraws.push( [parse_date(date).getTime(), query, parse_float(amount)] );
         }
         
@@ -57,36 +80,20 @@ function init_3ddd_stats() {
 
         //parse old withdraws
         for (const [date, query, amount] of withdraws) {
-            make_request('https://3ddd.ru/user/' + query + '?page=1', parse_income_page);
+            make_request('https://3ddd.ru/user/' + query, parse_income_page);
         }
         
         //parse new income too
-        make_request('https://3ddd.ru/user/income_new?page=1', parse_income_page);
+        make_request('https://3ddd.ru/user/income_new', parse_income_page);
     }
     
     //TBD: error handling
     function parse_income_page(e) {
         //workaround for multiple pages
-        {
-            const [_, url, page] = (/(.+?(?=page))page=([0-9]+)/g).exec(e.target.responseURL);
-            const pagei = parseInt(page);
-            const query = url.split('/').pop().replace('?','\\?');
-            const regex = new RegExp( query + "page=([0-9]+)", 'g');
-            const links = e.target.response.matchAll(regex);
-            const pages = Array.from(links, v => parseInt(v[1]));
-            const pagel = Math.max.apply(Math, pages);
-            //spawn another reguest for the next page
-            if(pagei < pagel) {
-                ++progress_target;
-                make_request(url + 'page=' + (pagei+1), parse_income_page);
-            }  
-        }
+        handle_next_page(e, parse_income_page);
 
-        const sells = e.target.response.matchAll(reg2);
-        for (const [_, sell] of sells) {
-            const matches = sell.matchAll(reg3);
-            const [date, anchor, amount] = Array.from(matches, v => v[1]);
-            
+		for (const [date, anchor, amount] of parse_html(e.target.response)) {
+                   
             //TBD: make a smart insert in pre sorted array
             if (!products[anchor]) products[anchor] = [];
             products[anchor].push([ parse_date(date).getTime(), parse_float(amount) ]);
