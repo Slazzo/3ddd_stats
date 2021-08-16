@@ -726,7 +726,7 @@
                 .map(w => {
                 return { x: w.time, label: { text: 'withdraw ' + w.amount }, strokeDashArray: 1};
             });
-            return this.#chart.updateOptions(this.#config);
+            //return this.#chart.updateOptions(this.#config);
         }
     };
 
