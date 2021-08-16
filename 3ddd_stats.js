@@ -32,7 +32,7 @@
                     return query in data;
                 },
                 get(query) {
-                    return data[query]
+                    return data[query];
                 },
                 set(query, value) {
                     data[query] = value;
@@ -113,7 +113,7 @@
             return make_request(url).then(res => {
                     const tasks = Array.from(iterate_pages(res), 
                         v => make_request(v).then(parser));
-                    return Promise.all(tasks.concat(parser(res)))
+                    return Promise.all(tasks.concat(parser(res)));
                 });
         }
 
@@ -231,7 +231,6 @@
                 }
             }, ms);
         }
-
         return wrapper;
     }
 
@@ -279,18 +278,18 @@
                 for(const [n,v] of this.#iterateObject(value)) {
                     const p = name + '.' + n;
                     if(this.#callable[p]) {
-                        this.#callable[p].forEach(f => f(p, v))
+                        this.#callable[p].forEach(f => f(p, v));
                     }
                 }
             }
 
             if(this.#callable[name])
-                 this.#callable[name].forEach(f => f(name, value))
+                 this.#callable[name].forEach(f => f(name, value));
                  
             for(const p of this.#iterateParameter(name))
              if(this.#callable[p]) {
                  const v = this.get(p);
-                 this.#callable[p].forEach(f => f(p, v))
+                 this.#callable[p].forEach(f => f(p, v));
             }
         }
 
@@ -317,11 +316,16 @@
     class ModelView {
         #model;
 
-        constructor(model) { this.#model = model;}
+        constructor(model) { this.#model = model; }
+        
         subscribe(name, func) { this.#model.subscribe(name, func); }
+        
         notify(name, value) { this.#model.notify(name, value); }
+        
         set(name, value) { this.#model.set(name, value); }
+        
         get(name) { this.#model.get(name); }
+        
         model() { return this.#model; }
     };
 
@@ -370,8 +374,7 @@
             })
 
             super.set(param, options);
-
-            super.append(label, input)
+            super.append(label, input);
         }
      };
 
@@ -379,7 +382,7 @@
     class DropDownComponent extends Component {
 
         constructor(model, parent, param, options) {
-            super(model, parent)
+            super(model, parent);
             const select = createElement('select', {id:param+'.value'});
             const label = createElement('label', {'for':select.id});
             select.onchange = e => {
@@ -432,7 +435,7 @@
             super(model, parent);
 
             this.#form = createElement('form', 
-                { style:'display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:16px'})
+                { style:'display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:16px'});
 
             new DateInputComponent(model, this.#form, 'table.filter.from', {value:0, text:'From:', disabled:true})
             new DateInputComponent(model, this.#form, 'table.filter.upto', {value:0, text:'  To:', disabled:true})
@@ -507,7 +510,7 @@
                 this.#body.appendChild(script);
             }).catch(err => { 
                 super.remove();
-                throw 'failed to load Tabulator script'
+                throw 'failed to load Tabulator script';
             });
 
             this.#config.rowSelectionChanged = (data, rows) => {
@@ -515,18 +518,17 @@
                     data = this.#table.getRows("active")
                         .filter(r=>r.isSelected())
                         .map(r => r.getData());
-                }catch{}
+                } catch {}
                 setTimeout(super.set.bind(this, 'chart.products', data), 0)
             }
             this.#table = new Tabulator(this.#body, this.#config);
             this.#options = new TableOptionsComponent(super.model(), this.#header);
             
-            const throttledUpdate = throttle(this.#updateFromModel.bind(this), 1000)
+            const throttledUpdate = throttle(this.#updateFromModel.bind(this), 1000);
 
-            super.subscribe('table.products',throttledUpdate);
-            super.subscribe('table.filter.from.value',throttledUpdate)
-            super.subscribe('table.filter.upto.value',throttledUpdate)
-
+            super.subscribe('table.products', throttledUpdate);
+            super.subscribe('table.filter.from.value', throttledUpdate);
+            super.subscribe('table.filter.upto.value', throttledUpdate);
         }
 
         #updateFromModel() {
@@ -545,7 +547,7 @@
                     'data': data.filter(([date, amount]) => day(date) >= day(from) && day(date) <= day(upto)), 
                     'sales': { 'total':0, '3ddd':0, '3dsky':0 },
                     'income':{ 'total':0, '3ddd':0, '3dsky':0 }
-                }
+                };
 
                 product.data.forEach( ([date, amount]) => {
                     product.income.total += amount;
@@ -571,14 +573,14 @@
         constructor(model, parent) {
             super(model, parent);
             this.#form = createElement('form', 
-                { style:'display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:16px'})
+                { style:'display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:16px'});
 
-            new DropDownComponent(model, this.#form, 'chart.series', {text:'Series:', value:'per product', labels:['all selected','per product']})
-            new DropDownComponent(model, this.#form, 'chart.filter', {text:'Filter:', value:'none', labels:['none','3ddd','3dsky']})
-            new DropDownComponent(model, this.#form, 'chart.mapper', {text:'Mapper:', value:'price', labels:['price','income']})
+            new DropDownComponent(model, this.#form, 'chart.series', {text:'Series:', value:'per product', labels:['all selected','per product']});
+            new DropDownComponent(model, this.#form, 'chart.filter', {text:'Filter:', value:'none', labels:['none','3ddd','3dsky']});
+            new DropDownComponent(model, this.#form, 'chart.mapper', {text:'Mapper:', value:'price', labels:['price','income']});
             new CheckBoxComponent(model, this.#form, 'chart.display.annotations', {text:'Annotations', value:true});
             new CheckBoxComponent(model, this.#form, 'chart.display.legend', {text:'Legend', value:true});
-            new DropDownComponent(model, this.#form, 'chart.display.type', {text:'Type:', value:'line', labels:['line','area','scatter']})
+            new DropDownComponent(model, this.#form, 'chart.display.type', {text:'Type:', value:'line', labels:['line','area','scatter']});
             new CheckBoxComponent(model, this.#form, 'chart.display.stacked', {text:'Stacked', value:false, disabled:true});
             
             super.subscribe('chart.mapper.value', (_,v) => {
@@ -594,7 +596,6 @@
                     model.set('chart.display.stacked.value', false);
                 }
             })
-
             super.append(this.#form);
         }
     };
@@ -607,7 +608,7 @@
             super(model, parent);
             this.#body = createElement('div');
             this.#header = createElement('div');
-            super.append(this.#header, this.#body)
+            super.append(this.#header, this.#body);
             
             this.#config = {
                 series: [],
@@ -661,13 +662,13 @@
             
             this.#options = new ChartOptionsComponent(super.model(), this.#header);
 
-            const throttledUpdate = throttle(this.#updateFromModel.bind(this), 1000)
+            const throttledUpdate = throttle(this.#updateFromModel.bind(this), 1000);
 
-            super.subscribe('withdrawals', (_, data) => this.#updateAnnotations(data))
+            super.subscribe('withdrawals', (_, data) => this.#updateAnnotations(data));
             super.subscribe('chart.products', throttledUpdate);
-            super.subscribe('chart.series.value', throttledUpdate)
-            super.subscribe('chart.mapper.value', throttledUpdate)
-            super.subscribe('chart.filter.value', throttledUpdate)
+            super.subscribe('chart.series.value', throttledUpdate);
+            super.subscribe('chart.mapper.value', throttledUpdate);
+            super.subscribe('chart.filter.value', throttledUpdate);
             super.subscribe('chart.display', (n,v) => {
                 if(n != 'chart.display') return;
                 this.#config.chart.type = v.type.value.toLowerCase();
@@ -676,7 +677,7 @@
                 this.#config.annotations.position = v.annotations.value ? 'front' : 'hidden'; 
                 this.#config.legend.show = v.legend.value; 
                 this.#chart.updateOptions(this.#config);
-            })
+            });
         }
 
         #updateFromModel() {
@@ -684,7 +685,6 @@
         }
 
         #update(products) {
-            
             const seriesType = super.model().get('chart.series.value');
             const mapperType = super.model().get('chart.mapper.value');
             const filterType = super.model().get('chart.filter.value');
@@ -699,7 +699,7 @@
 
             let totalDataPoints = 0;
             const filter = {
-                'none'    : () =>      { ++totalDataPoints; return true; },
+                'none'    : () =>     { ++totalDataPoints; return true; },
                 '3ddd'   : ([t,v]) => { ++totalDataPoints; return !isSoldBy3dsky(t,v); },
                 '3dsky'  : ([t,v]) => { ++totalDataPoints; return  isSoldBy3dsky(t,v); },
             }[filterType];
@@ -709,7 +709,7 @@
                 'income': ()=> { let sum=0; return ([t,v]) => [t, sum+=v]; }
             }[mapperType];
 
-            this.#config.title.text = mapperType +' per product';
+            this.#config.title.text = mapperType + ' per product';
             this.#config.series = Array.from(products, p =>{
                 return {
                     name: p.name,
@@ -726,7 +726,7 @@
                 .map(w => {
                 return { x: w.time, label: { text: 'withdraw ' + w.amount }, strokeDashArray: 1};
             });
-            this.#chart.updateOptions(this.#config);
+            return this.#chart.updateOptions(this.#config);
         }
     };
 
@@ -815,7 +815,7 @@
         async init() {
             window.scrollTo({ top: this.#title, behavior: 'smooth'});
 
-            this.#model.notify('progress',{ text:'Loading scripts', value:'pending'});
+            this.#model.notify('progress', { text:'Loading scripts', value:'pending'});
             await this.#main.init()
                 .catch(err => {
                     this.#body.remove();
@@ -823,8 +823,8 @@
                 });
 
             let withdrawals = [];
-            this.#model.notify('progress',{ text:'Parsing withdrawals', value:'pending'});
-            return collect().then(tasks => {
+            this.#model.notify('progress', { text:'Parsing withdrawals', value:'pending'});
+            return collect().then( tasks => {
                 //for progress estimate
                 let progress_target = tasks.length;
                 let progress_amount = 0;
@@ -840,8 +840,7 @@
                 return Promise.all(tasks).then(() => {
                     if(withdrawals.length > 0) {
                         const lastUpdateTime = new Date(withdrawals[withdrawals.length-1].time);
-                        this.#model.notify('progress',
-                            { text:'Last update '+ this.dateFormatter.format(lastUpdateTime), value:1})
+                        this.#model.notify('progress', { text:'Last update '+ this.dateFormatter.format(lastUpdateTime), value:1})
                     }
                 });
             }).catch(err => { 
