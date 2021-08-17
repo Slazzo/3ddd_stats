@@ -437,8 +437,8 @@
             this.#form = createElement('form', 
                 { style:'display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:16px'});
 
-            new DateInputComponent(model, this.#form, 'table.filter.from', {value:0, text:'From:', disabled:true})
-            new DateInputComponent(model, this.#form, 'table.filter.upto', {value:0, text:'  To:', disabled:true})
+            new DateInputComponent(model, this.#form, 'table.filter.from', {text:'From:', disabled:true, value: 0 })
+            new DateInputComponent(model, this.#form, 'table.filter.upto', {text:'  To:', disabled:true, value: Date.now() })
 
             super.subscribe('table.products',(_,products)=>{
                 let min = Date.now();
