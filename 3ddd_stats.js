@@ -274,7 +274,7 @@
         }
 
         notify(name, value) { 
-            if(typeof value === 'object') {
+            if(typeof value === 'object' && value !== null)
                 for(const [n,v] of this.#iterateObject(value)) {
                     const p = name + '.' + n;
                     if(this.#callable[p]) {
@@ -296,7 +296,7 @@
         *#iterateObject(object) {
             for(const [name, value] of Object.entries(object))
             {
-                if(typeof value === 'object')
+                if(typeof value === 'object' && value !== null)
                     for(const [n,v] of this.#iterateObject(value))
                         yield [name+'.'+n, v];
                 yield [name,value];
