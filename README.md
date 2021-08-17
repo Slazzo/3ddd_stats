@@ -14,5 +14,5 @@ The cache data is saved inside *localStorage* with key *"3ddd_stats_cache"* and 
 `localStorage.removeItem("3ddd_stats_cache")`
 
 ## Dependencies
-- `Tabulator.js  The easy to use, fully featured, interactive table JavaScript library http://tabulator.info`
-- `ApexCharts.js Modern & Interactive Open-source Charts https://apexcharts.com`
+- **Tabulator.js**  The easy to use, fully featured, interactive table JavaScript library https://tabulator.info
+- **ApexCharts.js** Modern & Interactive Open-source Charts https://apexcharts.com
