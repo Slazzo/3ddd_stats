@@ -663,8 +663,9 @@
             this.#options = new ChartOptionsComponent(super.model(), this.#header);
 
             const throttledUpdate = throttle(this.#updateFromModel.bind(this), 1000);
-
-            super.subscribe('withdrawals', (_, data) => this.#updateAnnotations(data));
+            const throttledAnnotationsUpdate = throttle(this.#updateAnnotationsFromModel.bind(this), 2000);
+            
+            super.subscribe('withdrawals', throttledAnnotationsUpdate);
             super.subscribe('chart.products', throttledUpdate);
             super.subscribe('chart.series.value', throttledUpdate);
             super.subscribe('chart.mapper.value', throttledUpdate);
@@ -682,6 +683,10 @@
 
         #updateFromModel() {
             this.#update(super.model().get('chart.products'));
+        }
+        
+        #updateAnnotationsFromModel() {
+            this.#updateAnnotations(super.model().get('withdrawals'));
         }
 
         #update(products) {
