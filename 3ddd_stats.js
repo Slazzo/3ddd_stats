@@ -274,7 +274,7 @@
         }
 
         notify(name, value) { 
-            if(typeof value === 'object' && value !== null) { //TBD: proper check if value is object
+            if(typeof value === 'object' && value !== null && !Array.isArray(value)) { 
                 for(const [n,v] of this.#iterateObject(value)) {
                     const p = name + '.' + n;
                     if(this.#callable[p]) {
@@ -296,7 +296,7 @@
         *#iterateObject(object) {
             for(const [name, value] of Object.entries(object))
             {
-                if(typeof value === 'object' && value !== null) //TBD: proper check if value is object
+                if(typeof value === 'object' && value !== null && !Array.isArray(value))
                     for(const [n,v] of this.#iterateObject(value))
                         yield [name+'.'+n, v];
                 yield [name,value];
@@ -394,7 +394,9 @@
                 label.textContent = v.text || '';
                 select.options.length = 0;
                 for(const text of (v.labels || [])) {
-                    const el = createElement('option'); el.text = text; select.append(el);
+                    const el = createElement('option'); 
+                    el.text = text; 
+                    select.append(el);
                 }
                 select.value = v.value;
                 select.readOnly = v.readOnly || false;
@@ -440,7 +442,8 @@
             new DateInputComponent(model, this.#form, 'table.filter.from', {text:'From:', disabled:true, value: 0 })
             new DateInputComponent(model, this.#form, 'table.filter.upto', {text:'  To:', disabled:true, value: Date.now() })
 
-            super.subscribe('table.products',(_,products)=>{
+            super.subscribe('table.products', (n, products) => {
+                if(n != 'table.products') return;
                 let min = Date.now();
                 let max = 0;
                 for(const [_,data] of Object.entries(products)) {
@@ -526,7 +529,7 @@
             
             const throttledUpdate = throttle(this.#updateFromModel.bind(this), 1000);
 
-            super.subscribe('table.products', throttledUpdate);
+            super.subscribe('table.products', (n, v) => { if(n == 'table.products') throttledUpdate(); });
             super.subscribe('table.filter.from.value', throttledUpdate);
             super.subscribe('table.filter.upto.value', throttledUpdate);
         }
@@ -590,12 +593,12 @@
                 } else {
                     model.set('chart.display.stacked.disabled', false);
                 }
-            })
+            });
             super.subscribe('chart.display.stacked.value', (_,v) => {
                 if( v == true && model.get('chart.mapper.value') == 'price') {
                     model.set('chart.display.stacked.value', false);
                 }
-            })
+            });
             super.append(this.#form);
         }
     };
@@ -665,8 +668,8 @@
             const throttledUpdate = throttle(this.#updateFromModel.bind(this), 1000);
             const throttledAnnotationsUpdate = throttle(this.#updateAnnotationsFromModel.bind(this), 2000);
             
-            super.subscribe('withdrawals', throttledAnnotationsUpdate);
-            super.subscribe('chart.products', throttledUpdate);
+            super.subscribe('withdrawals', (n,v) => { if(n == 'withdrawals') throttledAnnotationsUpdate(); });
+            super.subscribe('chart.products', (n,v) => { if(n == 'chart.products') throttledUpdate(); });
             super.subscribe('chart.series.value', throttledUpdate);
             super.subscribe('chart.mapper.value', throttledUpdate);
             super.subscribe('chart.filter.value', throttledUpdate);
